@@ -6,7 +6,7 @@ Developing a Single Page Application for classical music enthusiasts
 ### Why?
 Because classical music and its fans deserve so much more!
 
-## How?
+### How?
 The project features `Angular 2.0` for handling the delicate frontend, `Node.js` for providing the backend capabilities wrapped up in a RESTful architecture and `Sequelize` for connecting with a MySQL relational database.
 
 ### Sounds promising. What can I do with it?
@@ -35,6 +35,6 @@ Here's a rather unrealistic mockup, but feel free to look over it:
 ![mockupImage](https://user-images.githubusercontent.com/29733821/32249147-9e676a7a-be90-11e7-9d8d-727b4e1748b7.jpg)
 
 
-### Sounds cool. Where do I find it? 
+### Cool! Where do I find it? 
 > At the moment the application is in process of development and therefore it is not publicly available, 
 > but you may check the code at any time
