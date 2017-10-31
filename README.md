@@ -32,7 +32,7 @@ Let's begin with the endpoints:
 * `/advancedSearch/` will provide the `Advanced Song Search` functionality, featuring two return types. `/advancedSearch/:searchId&:type/` will return either a chart of pieces that contain the note sequence (if `type` will be `chart`) or 
 a list of pieces (if `type` will be `pieces`); resulting endpoint will be `/advancedSearch/:searchId&type=chart/result`.
 Here's a rather unrealistic mockup, but feel free to look over it:
-![Mockup](https://drive.google.com/file/d/1RVS2rt1k_Vi7pZLXT2QK03z_COSlSv8zpQ/view)
+![mockupImage](https://user-images.githubusercontent.com/29733821/32249147-9e676a7a-be90-11e7-9d8d-727b4e1748b7.jpg)
 
 
 ### Sounds cool. Where do I find it? 
