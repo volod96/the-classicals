@@ -1,0 +1,28 @@
+{
+  "name": "the-classicals",
+  "version": "1.0.0",
+  "description": "Server fot the-classicals SPA project",
+  "main": "server.js",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "moment": "^2.19.3",
+    "my-sql": "^1.2.9",
+    "mysql": "^2.15.0",
+    "nodeadmin": "^0.1.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/volod96/the-classicals.git"
+  },
+  "author": "Vlad B.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/volod96/the-classicals/issues"
+  },
+  "homepage": "https://github.com/volod96/the-classicals#readme"
+}
