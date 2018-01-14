@@ -24,6 +24,9 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(nodeAdmin(app));
 
+// Serving data for frontend
+app.use(express.static("assets"));
+
 // RESTful API for classical music website
 
 // Check if an object is undefined
@@ -515,6 +518,6 @@ app.delete("pieces/:id", function(request, response) {
 });
 
 
-app.listen(process.env.PORT);
+app.listen(8081);
 
-console.log("Server started successfully on port " + process.env.PORT);
+console.log("Server started successfully on port " + 8081);
