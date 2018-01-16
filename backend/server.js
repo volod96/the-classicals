@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const nodeAdmin = require("nodeadmin");
 const mySql = require("mysql");
 const moment = require("moment");
+const cors = require("cors");
 
 // Getting connection to MySQL database
 const mySqlConnectionPool = {
@@ -18,6 +19,7 @@ const mySqlConnectionPool = {
 // Initialize Express Framework and other components used
 const app = express();
 
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended:true
@@ -53,17 +55,6 @@ function replaceNulls(array, replaceValue) {
     }
     return array;
 }
-
-//Convert object values to a comma-separated string (for INSERT purposes)
-// function objectToCommaString(object) {
-//     let keyArray = Object.keys(object);
-//     var result = "";
-//     for(let i=0; i<keyArray.length; i++) {
-//         let currentKey = keyArray[i];
-//         result += (i < keyArray.length - 1) ? object[currentKey] + ", " : object[currentKey];
-//     }
-//     return result;
-// }
 
 // Database hardcoded table names:
 const tableNames = {
@@ -110,7 +101,8 @@ const sqlQueries = {
   },
   entriesByAttribute: function(tableName, attribute, attributeValue) {
       return "SELECT * FROM " + tableName + " WHERE LOWER(" + attribute + ")  LIKE '" + attributeValue +"%'";
-  }
+  },
+  composers: "SELECT Id, Name, DATE_FORMAT(BirthDate, '%d/%m/%Y') AS BirthDate, Popularity, Period FROM Composer"
 };
 
 const sqlDDM = {
@@ -238,6 +230,31 @@ app.get("/composers", function(request, response) {
     });
 });
 
+app.get("/composers-table", function(request, response) {
+    getConnection(response, "/composers-table", function(connection) {
+        if (connection !== null) {
+            connection.query(sqlQueries.composers, function(error, result, fields) {
+                connection.release();
+                if (error) {
+                    console.log(errorMessages.log.getDatabaseQueryFailed("/composers", error));
+                    response.status(403).send(errorMessages.restRequests.getDatabaseQueryFailed(tableNames.composer));
+                }
+                else {
+                    response.status(200).send(result.map(function(composer) {
+                        return ({
+                          Id: composer.Id,
+                          Name: composer.Name,
+                          BirthDate: composer.BirthDate,
+                          Popularity: composer.Popularity,
+                          Period: composer.Period
+                        });
+                    }));
+                }
+            });
+        }
+    });
+});
+
 app.get("/composers/:id", function(request, response) {
     getConnection(response, "/composers/:id", function(connection) {
         if (connection !== null) {
@@ -350,14 +367,16 @@ app.post("/composer", function(request, response) {
    getConnection(response, "/composer", function(connection) {
        if (connection !== null) {
            // Obtaining data for the new object
-           let composerName = separatorToSpaceWords(request.query.name, "_", true);
-           let composerLifeDescription = separatorToSpaceWords(request.query.lifeDescription, "_", true);
-           let composerBirthDate = !isUndefined(request.query.birthDate) ? "'" + moment(request.query.birthDate).format("YYYY-MM-DD") + "'" : null;
-           let composerPeriod = separatorToSpaceWords(request.query.period, "_", true);
-           let composerWikipediaLink = !isUndefined(request.query.wikipediaLink) ? "'" + request.query.wikipediaLink + "'" : null;
-           let composerCatalogName = separatorToSpaceWords(request.query.catalogName, "_", true);
-           var composerData = replaceNulls([composerName, composerLifeDescription, composerBirthDate, composerPeriod, composerWikipediaLink, composerCatalogName], "NULL");
-           let columns = tableColumns.composer.filter(element => element !== "Popularity");
+           let composerName = separatorToSpaceWords(request.query.Name, "_", true);
+           let composerLifeDescription = separatorToSpaceWords(request.query.LifeDescription, "_", true);
+           let composerBirthDate = !isUndefined(request.query.BirthDate) ? "'" + moment(request.query.BirthDate, "DD-MM-YYYY").format("YYYY-MM-DD") + "'" : null;
+           let composerPeriod = separatorToSpaceWords(request.query.Period, "_", true);
+           let composerWikipediaLink = !isUndefined(request.query.WikipediaLink) ? "'" + request.query.WikipediaLink + "'" : null;
+           let composerPopularity =!isUndefined(request.query.Popularity) ? request.query.Popularity : null;
+           let composerCatalogName = separatorToSpaceWords(request.query.CatalogName, "_", true);
+           var composerData = replaceNulls([composerName, composerLifeDescription, composerBirthDate, composerPopularity, composerPeriod, composerWikipediaLink, composerCatalogName], "NULL");
+           let columns = tableColumns.composer;
+           console.log("Statement: " + sqlDDM.insert(tableNames.composer, composerData.join(","), columns.join(",")));
            connection.query(sqlDDM.insert(tableNames.composer, composerData.join(","), columns.join(",")), function(error, result) {
                 connection.release();
                 if (error) {
@@ -380,13 +399,13 @@ app.post("/piece", function(request, response) {
    getConnection(response, "/piece", function(connection) {
        // Data for INSERT 
        if (connection !== null) {
-           let composerId = request.query.composerId;
-           let creationYear = !isUndefined(request.query.creationYear) ? request.query.creationYear : null;
-           let description = separatorToSpaceWords(request.query.description, "_", true);
-           let wikipediaLink = !isUndefined(request.query.wikipediaLink) ? "'" + request.query.wikipediaLink + "'" : null;
-           let name = separatorToSpaceWords(request.query.name, "_", true);
-           let youtubeLink = separatorToSpaceWords(request.query.youtubeLink, true);
-           let catalogNumber = !isUndefined(request.query.catalogNumber) ? request.query.catalogNumber : null;
+           let composerId = request.query.ComposerId;
+           let creationYear = !isUndefined(request.query.CreationYear) ? request.query.CreationYear : null;
+           let description = separatorToSpaceWords(request.query.LifeDescription, "_", true);
+           let wikipediaLink = !isUndefined(request.query.WikipediaLink) ? "'" + request.query.WikipediaLink + "'" : null;
+           let name = separatorToSpaceWords(request.query.Name, "_", true);
+           let youtubeLink = separatorToSpaceWords(request.query.YoutubeLink, true);
+           let catalogNumber = !isUndefined(request.query.CatalogNumber) ? request.query.CatalogNumber : null;
            let pieceData = replaceNulls([composerId, creationYear, description, wikipediaLink, name, youtubeLink, catalogNumber], "NULL");
            let columns = tableColumns.piece.filter(column => column !== "Favorite");
            connection.query(sqlDDM.insert(tableNames.piece, pieceData.join(","), columns.join(",")), function(error, result) {
@@ -412,16 +431,16 @@ app.put("/composer", function(request, response) {
     getConnection(response, "/composer", function(connection) {
         if (connection !== null) {
             // Obtaining data for update
-            let composerId = request.query.id;
-            let composerName = separatorToSpaceWords(request.query.name, "_", true);
-            let composerLifeDescription = separatorToSpaceWords(request.query.lifeDescription, "_", true);
-            let composerBirthDate = !isUndefined(request.query.birthDate) ? "'" + moment(request.query.birthDate).format("YYYY-MM-DD") + "'" : null;
-            let composerPeriod = separatorToSpaceWords(request.query.period, "_", true);
-            let composerWikipediaLink = !isUndefined(request.query.wikipediaLink) ? "'" + request.query.wikipediaLink + "'" : null;
-            let composerCatalogName = separatorToSpaceWords(request.query.catalogName, "_", true);
-            let composerPopularity = !isUndefined(request.query.popularity) ? request.query.popularity : null;
+            let composerId = request.query.Id;
+            let composerName = separatorToSpaceWords(request.query.Name, "_", true);
+            let composerLifeDescription = separatorToSpaceWords(request.query.LifeDescription, "_", true);
+            let composerBirthDate = !isUndefined(request.query.BirthDate) ? "'" + moment(request.query.BirthDate, "DD-MM-YYYY").format("YYYY-MM-DD") + "'" : null;
+            let composerPeriod = separatorToSpaceWords(request.query.Period, "_", true);
+            let composerWikipediaLink = !isUndefined(request.query.WikipediaLink) ? "'" + request.query.WikipediaLink + "'" : null;
+            let composerCatalogName = separatorToSpaceWords(request.query.CatalogName, "_", true);
+            let composerPopularity = !isUndefined(request.query.Popularity) ? request.query.Popularity : null;
             var composerData = replaceNulls([composerName, composerLifeDescription, composerBirthDate, composerPopularity, composerPeriod, composerWikipediaLink, composerCatalogName], "NULL");
-            //console.log("Got update: " + sqlDDM.update(tableNames.piece, tableColumns.composer, composerData, composerId));
+            console.log("Got update: " + sqlDDM.update(tableNames.composer, tableColumns.composer, composerData, composerId));
             connection.query(sqlDDM.update(tableNames.composer, tableColumns.composer, composerData, composerId), function(error, result) {
                 connection.release();
                 if (error) {
@@ -454,8 +473,9 @@ app.put("/piece", function(request, response) {
            let catalogNumber = !isUndefined(request.query.catalogNumber) ? request.query.catalogNumber : null;
            let favorite = !isUndefined(request.query.favorite) ?  request.query.favorite : false;
            let pieceData = replaceNulls([composerId, creationYear, description, wikipediaLink, name, favorite, youtubeLink, catalogNumber], "NULL");
-           console.log("Got update: " + sqlDDM.update(tableNames.piece, tableColumns.piece, pieceData, pieceId));
+           // console.log("Got update: " + sqlDDM.update(tableNames.piece, tableColumns.piece, pieceData, pieceId));
            connection.query(sqlDDM.update(tableNames.piece, tableColumns.piece, pieceData, pieceId), function(error, result) {
+               connection.release();
               if(error) {
                   console.log(errorMessages.log.getDatabaseQueryFailed("/piece"));
                   response.status(403).send(errorMessages.restRequests.getDatabaseQueryFailed(tableNames.piece));
@@ -479,12 +499,13 @@ app.delete("/composers/:id", function(request, response) {
            // Get deleted ID
            let composerId = request.params.id;
            connection.query(sqlDDM.delete(tableNames.composer, composerId), function(error, result) {
+               connection.release();
                if(error) {
-                    console.log(errorMessages.log.getDatabaseQueryFailed("/composer"));
+                    console.log(errorMessages.log.getDatabaseQueryFailed("/composer/:id"));
                     response.status(403).send(errorMessages.restRequests.getDatabaseQueryFailed(tableNames.composer));
                }
                else {
-                   response.status(200).send(composerId);
+                   response.status(200).send(result);
                }
            });
        }
@@ -495,12 +516,13 @@ app.delete("/composers/:id", function(request, response) {
     });
 });
 
-app.delete("pieces/:id", function(request, response) {
+app.delete("/pieces/:id", function(request, response) {
     getConnection(response, "/pieces/:id", function(connection) {
        if(connection !== null) {
            // Get deleted ID
            let pieceId = request.params.id;
            connection.query(sqlDDM.delete(tableNames.piece, pieceId), function(error, result) {
+               connection.release();
                if(error) {
                     console.log(errorMessages.log.getDatabaseQueryFailed("/pieces/:id"));
                     response.status(403).send(errorMessages.restRequests.getDatabaseQueryFailed(tableNames.piece));
