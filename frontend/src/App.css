@@ -2,13 +2,52 @@
   text-align: center;
 }
 
+.table-header {
+  font-family: sans-serif;
+  background-color: #F5F5F5;
+}
+
+.even-table-row {
+  background-color: #B2DFDB;
+}
+
+.odd-table-row {
+  background-color: #ECEFF1;
+}
+
+.add-button {
+  text-align: center;
+  margin-left: 4px;
+}
+
+.delete-button {
+  margin-left: 5px;
+}
+
+.one-digit-id-label-edit-button {
+  text-align: center;
+}
+
+.two-digit-id-label-edit-button {
+  text-align: center;
+  margin-right: 5px;
+}
+
+.id-label {
+  float: left;
+  margin-top: 12px;
+}
+
+
+.add-row-content {
+  vertical-align: middle;
+  display: table-cell;
+}
+
 .main-menu {
   height: 80%;
 }
 
-.App {
-  text-align: center;
-}
 
 .App-logo {
   animation: App-logo-spin infinite 20s linear;
