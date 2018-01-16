@@ -102,7 +102,13 @@ const sqlQueries = {
   entriesByAttribute: function(tableName, attribute, attributeValue) {
       return "SELECT * FROM " + tableName + " WHERE LOWER(" + attribute + ")  LIKE '" + attributeValue +"%'";
   },
-  composers: "SELECT Id, Name, DATE_FORMAT(BirthDate, '%d/%m/%Y') AS BirthDate, Popularity, Period FROM Composer"
+  composers: "SELECT Id, Name, DATE_FORMAT(BirthDate, '%d/%m/%Y') AS BirthDate, Popularity, Period FROM Composer",
+  composersNames: "SELECT Id, Name FROM Composer",
+  pieces: "SELECT p.Id AS Id, p.ComposerId AS ComposerId, c.Name AS ComposerName, p.Name AS Name, p.CreationYear AS CreationYear, p.Favorite AS Favorite " +
+          "FROM Piece AS p JOIN Composer AS c ON (p.ComposerId = c.Id)",
+  alterForeignKeyCheck: function(enable) {
+      return "SET FOREIGN_KEY_CHECKS = " + (enable ? 1 : 0);
+  }    
 };
 
 const sqlDDM = {
@@ -255,6 +261,23 @@ app.get("/composers-table", function(request, response) {
     });
 });
 
+app.get("/composer-names", function(request, response) {
+    getConnection(response, "/composers-table", function(connection) {
+        if (connection !== null) {
+            connection.query(sqlQueries.composersNames, function(error, result, fields) {
+                connection.release();
+                if (error) {
+                    console.log(errorMessages.log.getDatabaseQueryFailed("/composers", error));
+                    response.status(403).send(errorMessages.restRequests.getDatabaseQueryFailed(tableNames.composer));
+                }
+                else {
+                    response.status(200).send(result);
+                }
+            });
+        }
+    });
+});
+
 app.get("/composers/:id", function(request, response) {
     getConnection(response, "/composers/:id", function(connection) {
         if (connection !== null) {
@@ -299,6 +322,23 @@ app.get("/search/composers/:name", function(request, response) {
             });
         }
     });
+});
+
+app.get("/pieces-table", function(request, response) {
+    getConnection(response, "/pieces", function(connection) {
+       if (connection !== null) {
+           connection.query(sqlQueries.pieces, function(error, result, fields) {
+               connection.release();
+               if (error) {
+                   console.log(errorMessages.log.getDatabaseQueryFailed("/pieces", error));
+                   response.status(403).send(errorMessages.restRequests.getDatabaseQueryFailed(tableNames.piece));
+               }
+               else {
+                   response.status(200).send(result);
+               }
+           });
+       }
+   });
 });
 
 app.get("/pieces", function(request, response) {
@@ -521,8 +561,10 @@ app.delete("/pieces/:id", function(request, response) {
        if(connection !== null) {
            // Get deleted ID
            let pieceId = request.params.id;
-           connection.query(sqlDDM.delete(tableNames.piece, pieceId), function(error, result) {
-               connection.release();
+           connection.query(sqlQueries.alterForeignKeyCheck(false), function(error, result) {
+                   connection.query(sqlDDM.delete(tableNames.piece, pieceId), function(error, result) {
+                        connection.query(sqlQueries.alterForeignKeyCheck(true), function(error, result) {
+                        connection.release();
                if(error) {
                     console.log(errorMessages.log.getDatabaseQueryFailed("/pieces/:id"));
                     response.status(403).send(errorMessages.restRequests.getDatabaseQueryFailed(tableNames.piece));
@@ -530,11 +572,13 @@ app.delete("/pieces/:id", function(request, response) {
                else {
                    response.status(200).send(pieceId);
                }
+                });
            });
-       }
-       else {
-           console.log(errorMessages.log.getDatabaseQueryFailed("/pieces/:id"));
-           response.status(403).send(errorMessages.restRequests.getDatabaseQueryFailed(tableNames.piece));
+       });
+    }
+    else {
+        console.log(errorMessages.log.getDatabaseQueryFailed("/pieces/:id"));
+        response.status(403).send(errorMessages.restRequests.getDatabaseQueryFailed(tableNames.piece));
        }
     });
 });
